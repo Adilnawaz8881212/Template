@@ -2,7 +2,7 @@ streamlit==1.42.0
 faster-whisper==1.1.1
 spacy==3.8.5
 sentence-transformers==4.0.2
-sounddevice
+sounddevice==0.5.1
 soundfile==0.13.1
 reportlab==4.3.1
 numpy==2.1.3
