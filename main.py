@@ -1,5 +1,5 @@
 import os
-
+import streamlit as st
 from modules.audio_processor import transcribe_audio
 from modules.nlp_extractor import extract_data
 from modules.template_matcher import match_template
@@ -18,30 +18,46 @@ TEMPLATES = {
     # Add more if needed
 }
 
-def process_audio(audio_path: str):
-    # 1) Transcribe
-    transcript = transcribe_audio(audio_path)
-    print("\n>> Transcript:\n", transcript)
+# Streamlit UI
+st.title("Audio-to-PDF Processor")
 
-    # 2) Extract Data
-    extracted = extract_data(transcript)
-    print("\n>> Extracted Data:\n", extracted)
+# Audio file upload
+uploaded_file = st.file_uploader("Upload an audio file", type=["mp3", "wav", "m4a"])
 
-    # 3) Pick Template
-    chosen = match_template(transcript, TEMPLATES)
-    print("\n>> Matched Template:\n", chosen)
+if uploaded_file is not None:
+    # Save the uploaded file temporarily
+    with open("temp_audio_file", "wb") as f:
+        f.write(uploaded_file.getbuffer())
 
-    # 4) Fill PDF
-    template_path = TEMPLATES[chosen]["path"]
-    base_name = os.path.splitext(os.path.basename(audio_path))[0]
-    output_path = f"output/filled_{base_name}.pdf"
-    fill_pdf(template_path, output_path, extracted)
-    print(f"\n>> PDF created at: {output_path}\n")
+    st.write("Audio file uploaded successfully.")
 
-def main():
-    os.makedirs("output", exist_ok=True)
-    audio_path = "audio/sample_audio.mp3"
-    process_audio(audio_path)
+    if st.button("Process Audio"):
+        # Process the uploaded audio
+        audio_path = "temp_audio_file"
+        
+        # 1) Transcribe
+        transcript = transcribe_audio(audio_path)
+        st.write("\n>> Transcript:\n", transcript)
 
-if __name__ == "__main__":
-    main()
+        # 2) Extract Data
+        extracted = extract_data(transcript)
+        st.write("\n>> Extracted Data:\n", extracted)
+
+        # 3) Pick Template
+        chosen = match_template(transcript, TEMPLATES)
+        st.write("\n>> Matched Template:\n", chosen)
+
+        # 4) Fill PDF
+        template_path = TEMPLATES[chosen]["path"]
+        base_name = os.path.splitext(os.path.basename(audio_path))[0]
+        output_path = f"output/filled_{base_name}.pdf"
+
+        # Ensure output folder exists
+        os.makedirs("output", exist_ok=True)
+        
+        fill_pdf(template_path, output_path, extracted)
+        st.write(f"\n>> PDF created at: {output_path}")
+        
+        # Display download link
+        with open(output_path, "rb") as f:
+            st.download_button("Download PDF", f, file_name=f"filled_{base_name}.pdf")
